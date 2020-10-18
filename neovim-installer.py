@@ -7,6 +7,7 @@ from argparse import ArgumentParser
 from os import system, listdir, path
 from shutil import copy, copytree
 from threading import Thread
+from concurrent.futures.thread import ThreadPoolExecutor
 
 def copytree2(src, dst, symlinks=False, ignore=None):
     for item in listdir(src):
@@ -26,27 +27,18 @@ def install():
     dSrc = "./nvim-osx64/"
     dDest = "/usr/local/"
 
-    fExec = Thread(target=copy, args=[dSrc + "bin/nvim", dDest + "bin/nvim"])
-    fExec.start()
+    with ThreadPoolExecutor(max_workers = 5) as pool:
+        pool.submit(copy, dSrc + "bin/nvim", dDest + "/bin/nvim")
+       
+        system("mkdir -p " + dDest + "/lib/nvim/parser")
+        pool.submit(copy, dSrc + "lib/nvim/parser/c.so", dDest + "lib/nvim/parser/c.so")
+    
+        system("mkdir -p " + dDest + "/libs")
+        pool.submit(copytree2, dSrc + "libs/", dDest + "libs/")
 
-    system("mkdir -p " + dDest + "/lib/nvim/parser")
-    cso = Thread(target=copy, args=[dSrc + "lib/nvim/parser/c.so", dDest + "lib/nvim/parser/c.so"])
-    cso.start()
+        pool.submit(copy, dSrc + "share/man/man1/nvim.1", dDest + "share/man/man1/nvim.1")
 
-    system("mkdir -p " + dDest + "/libs")
-    dlibs = Thread(target=copytree2, args=[dSrc + "libs/", dDest + "libs/"])
-    dlibs.start()
-
-    fMan = Thread(target=copy, args=[dSrc + "share/man/man1/nvim.1", dDest + "share/man/man1/nvim.1"])
-    fMan.start()
-
-    dRuntime = Thread(target=copytree, args=[dSrc + "share/nvim/runtime/", dDest + "share/nvim/runtime/"])
-    dRuntime.start()
-
-    fExec.join()
-    cso.join()
-    dlibs.join()
-    dRuntime.join()
+        pool.submit(copytree, dSrc + "share/nvim/runtime/", dDest + "share/nvim/runtime/")
 
     print("##### REMOVING TEMPORARY FILES #####")
     system("rm -f ./nvim-macos.tar.gz")
