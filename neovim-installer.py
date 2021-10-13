@@ -20,7 +20,7 @@ def copytree2(src, dst, symlinks=False, ignore=None):
 
 def install():
     print("##### DOWNLOADING AND EXTRACTING NEOVIM #####")
-    system("curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-macos.tar.gz")
+    system("curl -LO https://github.com/neovim/neovim/releases/download/v0.5.1/nvim-macos.tar.gz")
     system("tar xzf nvim-macos.tar.gz")
 
     print("##### COPYING FILES #####")
